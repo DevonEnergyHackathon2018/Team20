@@ -11,7 +11,10 @@ import AVFoundation
 import UIKit
 
 final class CameraView: UIView {
-    
+    private var cameraPosition: AVCaptureDevice.Position = AVCaptureDevice.Position.front
+    private var previewLayerImpl: AVCaptureVideoPreviewLayer? = nil;
+    private var sessionImpl: AVCaptureSession? = nil;
+
     private lazy var videoDataOutput: AVCaptureVideoDataOutput = {
         let v = AVCaptureVideoDataOutput()
         v.alwaysDiscardsLateVideoFrames = true
@@ -21,19 +24,50 @@ final class CameraView: UIView {
     }()
     
     private let videoDataOutputQueue: DispatchQueue = DispatchQueue(label: "JKVideoDataOutputQueue")
-    private lazy var previewLayer: AVCaptureVideoPreviewLayer = {
-        let l = AVCaptureVideoPreviewLayer(session: session)
-        l.videoGravity = .resizeAspect
-        return l
-    }()
+
+    public func resetSession() {
+        // clear the session
+        sessionImpl = nil;
+        
+        // remove preview layer
+        previewLayer.removeFromSuperlayer();
+        previewLayerImpl = nil;
+    }
     
-    private let captureDevice: AVCaptureDevice? = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
-    private lazy var session: AVCaptureSession = {
-        let s = AVCaptureSession()
-        s.sessionPreset = .vga640x480
-        return s
-    }()
+    private var previewLayer: AVCaptureVideoPreviewLayer {
+        get {
+            if (previewLayerImpl == nil) {
+                previewLayerImpl = AVCaptureVideoPreviewLayer(session: session)
+                previewLayerImpl!.videoGravity = .resizeAspect
+            }
+
+            return previewLayerImpl!;
+        }
+    }
+
+    private var session: AVCaptureSession {
+        get {
+            if (sessionImpl == nil) {
+                sessionImpl = AVCaptureSession();
+                sessionImpl!.sessionPreset = .high;
+            }
+            
+            return sessionImpl!;
+        }
+    }
     
+    private var captureDevice: AVCaptureDevice? {
+        get {
+            return AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: position);
+        }
+    }
+
+    private var position: AVCaptureDevice.Position {
+        get {
+            return cameraPosition;
+        }
+    }
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         
@@ -46,7 +80,15 @@ final class CameraView: UIView {
         commonInit()
     }
     
-    private func commonInit() {
+    func flipCamera() {
+        if (cameraPosition == .front) {
+            cameraPosition = .back;
+        } else {
+            cameraPosition = .front;
+        }
+    }
+
+    public func commonInit() {
         contentMode = .scaleAspectFit
         beginSession()
     }
@@ -56,6 +98,9 @@ final class CameraView: UIView {
             guard let captureDevice = captureDevice else {
                 fatalError("Camera doesn't work on the simulator! You have to test this on an actual device!")
             }
+
+            resetSession();
+
             let deviceInput = try AVCaptureDeviceInput(device: captureDevice)
             if session.canAddInput(deviceInput) {
                 session.addInput(deviceInput)
@@ -64,6 +109,7 @@ final class CameraView: UIView {
             if session.canAddOutput(videoDataOutput) {
                 session.addOutput(videoDataOutput)
             }
+
             layer.masksToBounds = true
             layer.addSublayer(previewLayer)
             previewLayer.frame = bounds
