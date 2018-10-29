@@ -23,7 +23,7 @@ public class SafetyEndpoint {
         OkHttpClient client = new OkHttpClient();
         RequestBody requestBody = RequestBody.create(MediaType.parse("application/octet-stream"), byteArray);
         Request request = new Request.Builder()
-                .url("https://southcentralus.api.cognitive.microsoft.com/customvision/v2.0/Prediction/8fdcf5ed-6a1c-4909-9fde-f8db0aaf8e61/image?iterationId=ee975c2c-c704-49e4-b343-2d7eea4bd695")
+                .url("https://southcentralus.api.cognitive.microsoft.com/customvision/v2.0/Prediction/8fdcf5ed-6a1c-4909-9fde-f8db0aaf8e61/image?iterationId=b598241e-5dfd-4426-b69b-293082938521")
                 .post(requestBody)
                 .header("Prediction-Key", "")
                 .header("Content-Type", "application/octet-stream")
