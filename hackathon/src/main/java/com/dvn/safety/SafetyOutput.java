@@ -6,7 +6,7 @@ public class SafetyOutput {
     public boolean hardhat;
     public boolean coat;
 
-    public static float threshold = 50.0f;
+    public static float threshold = 0.5f;
 
     public SafetyOutput(MLOutput mlOutput) {
         for (MLOutput.Prediction prediction : mlOutput.predictions) {
