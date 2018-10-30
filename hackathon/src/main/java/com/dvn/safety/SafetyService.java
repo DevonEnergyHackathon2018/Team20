@@ -9,8 +9,15 @@ public class SafetyService {
 
     private static Map<Boundary, String> locations = new ConcurrentHashMap<>();
 
+    private static Map<String, SafetyOutput> outputs = new ConcurrentHashMap<>();
+
     static {
         locations.put(new Boundary(-180.0, -85, 180.0 ,85), "The Earth");
+    }
+
+    public SafetyOutput getOutput(String id) {
+        outputs.putIfAbsent(id, new SafetyOutput());
+        return outputs.get(id);
     }
 
     public String getLocation(double lat, double lon) {
