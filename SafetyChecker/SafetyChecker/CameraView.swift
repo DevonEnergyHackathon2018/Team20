@@ -49,7 +49,12 @@ final class CameraView: UIView {
         get {
             if (sessionImpl == nil) {
                 sessionImpl = AVCaptureSession();
-                sessionImpl!.sessionPreset = .high;
+                
+                if (cameraPosition == .front) {
+                    sessionImpl!.sessionPreset = .high;
+                } else {
+                    sessionImpl!.sessionPreset = .low;
+                }
             }
             
             return sessionImpl!;
@@ -95,11 +100,20 @@ final class CameraView: UIView {
     
     let captureProcessor = PhotoCaptureProcessor();
 
-    public func captureImage() {
+    public func captureImage(id: String) {
+        captureProcessor.id = id;
+        
+        if (cameraPosition == .front) {
+            captureProcessor.version = "upper";
+        }
+        else {
+            captureProcessor.version = "lower";
+        }
+
         let photoSettings: AVCapturePhotoSettings
-        if photoDataOutput.availablePhotoCodecTypes.contains(.hevc) {
+        if photoDataOutput.availablePhotoCodecTypes.contains(.jpeg) {
             photoSettings = AVCapturePhotoSettings(format:
-                [AVVideoCodecKey: AVVideoCodecType.hevc]);
+                [AVVideoCodecKey: AVVideoCodecType.jpeg]);
         } else {
             photoSettings = AVCapturePhotoSettings();
         }
@@ -149,9 +163,33 @@ final class CameraView: UIView {
 extension CameraView: AVCaptureVideoDataOutputSampleBufferDelegate {}
 
 public class PhotoCaptureProcessor: NSObject, AVCapturePhotoCaptureDelegate {
+    var version: String = "";
+    var id: String = "";
+
     public final func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         let imageData = photo.fileDataRepresentation()
-        if let data = imageData, let img = UIImage(data: data) {
+
+        if let data = imageData {
+            NSLog("\(data.count)");
+
+            let url = "https://dvnhack.azurewebsites.net/api/image/\(id)/\(version)";
+            
+            var request = URLRequest(url: URL(string: url)!)
+            NSLog("URL " + url);
+            
+            request.httpMethod = "POST";
+            request.httpBody = data;
+            
+            URLSession.shared.dataTask(with: request, completionHandler: { data, response, error -> Void in
+                do {
+                    let jsonDecoder = JSONDecoder()
+                    let responseModel = try jsonDecoder.decode(DvnLocation.self, from: data!)
+                    print(response.debugDescription)
+                    print(responseModel.success)
+                } catch {
+                    print("JSON Serialization error")
+                }
+            }).resume()
         }
         
         NSLog("photoOutput")
