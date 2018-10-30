@@ -19,6 +19,13 @@ class DataViewController: UIViewController, CLLocationManagerDelegate {
     let shutterImage: UIImage? = UIImage(named: "shutter");
     var done = false;
 
+    @IBOutlet weak var personLabel: UILabel!
+    @IBOutlet weak var locationLabel: UILabel!
+    @IBOutlet weak var glassesLabel: UILabel!
+    @IBOutlet weak var hardhatLabel: UILabel!
+    @IBOutlet weak var bootsLabel: UILabel!
+    @IBOutlet weak var frcLabel: UILabel!
+    
     @IBOutlet weak var shutterButton: UIButton!
     @IBOutlet weak var cameraView: CameraView!
 
@@ -82,10 +89,6 @@ class DataViewController: UIViewController, CLLocationManagerDelegate {
         done = complete;
         
         if (complete) {
-            DispatchQueue.main.async { [unowned self] in
-                self.dataLabel!.text = "Complete";
-            }
-
             let url = "https://dvnhack.azurewebsites.net/api/result/\(self.uuid)";
             
             NSLog(url);
@@ -107,7 +110,36 @@ class DataViewController: UIViewController, CLLocationManagerDelegate {
 
                     let jsonDecoder = JSONDecoder()
                     let responseModel = try jsonDecoder.decode(DvnResult.self, from: data)
-                    print(try JSONEncoder().encode(responseModel))
+
+                    DispatchQueue.main.async { [unowned self] in
+                        self.dataLabel!.text = "Complete";
+                        self.personLabel!.text = responseModel.person;
+                        self.locationLabel!.text = responseModel.location;
+
+                        if (responseModel.hardhat) {
+                            self.hardhatLabel.textColor = UIColor.green;
+                        } else {
+                            self.hardhatLabel.textColor = UIColor.red;
+                        }
+
+                        if (responseModel.glasses) {
+                            self.glassesLabel.textColor = UIColor.green;
+                        } else {
+                            self.glassesLabel.textColor = UIColor.red;
+                        }
+
+                        if (responseModel.boots) {
+                            self.bootsLabel.textColor = UIColor.green;
+                        } else {
+                            self.bootsLabel.textColor = UIColor.red;
+                        }
+
+                        if (responseModel.frc) {
+                            self.frcLabel.textColor = UIColor.green;
+                        } else {
+                            self.frcLabel.textColor = UIColor.red;
+                        }
+                    }
                 } catch {
                     print("Result JSON Serialization error")
                 }
@@ -137,6 +169,7 @@ class DataViewController: UIViewController, CLLocationManagerDelegate {
             
             self.cameraView!.commonInit()
             self.uuid = UUID().uuidString;
+            done = false;
         }
         else {
             cameraView!.captureImage(id: uuid, captureCallback: self);
