@@ -85,6 +85,10 @@ final class CameraView: UIView {
         commonInit()
     }
     
+    func initCamera() {
+        cameraPosition = .front;
+    }
+
     func flipCamera() {
         if (cameraPosition == .front) {
             cameraPosition = .back;
@@ -100,15 +104,22 @@ final class CameraView: UIView {
     
     let captureProcessor = PhotoCaptureProcessor();
 
-    public func captureImage(id: String) {
-        captureProcessor.id = id;
-        
+    public func captureImage(id: String, captureCallback: DataViewController) {
         if (cameraPosition == .front) {
             captureProcessor.version = "upper";
         }
         else {
             captureProcessor.version = "lower";
         }
+
+        captureProcessor.id = id;
+        captureProcessor.captureCallback = {
+            if (self.captureProcessor.version == "lower") {
+                captureCallback.captureComplete(complete: true);
+            } else {
+                captureCallback.captureComplete(complete: false);
+            }
+        };
 
         let photoSettings: AVCapturePhotoSettings
         if photoDataOutput.availablePhotoCodecTypes.contains(.jpeg) {
@@ -166,6 +177,8 @@ public class PhotoCaptureProcessor: NSObject, AVCapturePhotoCaptureDelegate {
     var version: String = "";
     var id: String = "";
 
+    var captureCallback: () -> Void = {};
+
     public final func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         let imageData = photo.fileDataRepresentation()
 
@@ -186,12 +199,12 @@ public class PhotoCaptureProcessor: NSObject, AVCapturePhotoCaptureDelegate {
                     let responseModel = try jsonDecoder.decode(DvnLocation.self, from: data!)
                     print(response.debugDescription)
                     print(responseModel.success)
+
+                    self.captureCallback();
                 } catch {
-                    print("JSON Serialization error")
+                    print("Image JSON Serialization error")
                 }
-            }).resume()
+            }).resume();
         }
-        
-        NSLog("photoOutput")
     }
 }
