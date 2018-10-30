@@ -113,35 +113,49 @@ class DataViewController: UIViewController, CLLocationManagerDelegate {
 
                     DispatchQueue.main.async { [unowned self] in
                         self.dataLabel!.text = "Complete";
-                        self.personLabel!.text = responseModel.person;
-                        self.locationLabel!.text = responseModel.location;
 
-                        if (responseModel.hardhat) {
-                            self.hardhatLabel.textColor = UIColor.green;
-                        } else {
-                            self.hardhatLabel.textColor = UIColor.red;
+                        self.personLabel!.text = "Null Peoples";
+                        self.locationLabel!.text = "Null Locationes";
+
+                        if let p = responseModel.person {
+                            self.personLabel!.text = p;
+                        }
+                        
+                        if let p = responseModel.location {
+                            self.locationLabel!.text = p;
                         }
 
-                        if (responseModel.glasses) {
-                            self.glassesLabel.textColor = UIColor.green;
-                        } else {
-                            self.glassesLabel.textColor = UIColor.red;
+                        self.frcLabel.textColor = UIColor.red;
+                        self.hardhatLabel.textColor = UIColor.red;
+                        self.glassesLabel.textColor = UIColor.red;
+                        self.bootsLabel.textColor = UIColor.red;
+
+                        if let b = responseModel.hardhat {
+                            if (b) {
+                                self.hardhatLabel.textColor = UIColor.green;
+                            }
                         }
 
-                        if (responseModel.boots) {
-                            self.bootsLabel.textColor = UIColor.green;
-                        } else {
-                            self.bootsLabel.textColor = UIColor.red;
+                        if let b = responseModel.glasses {
+                            if (b) {
+                                self.glassesLabel.textColor = UIColor.green;
+                            }
                         }
 
-                        if (responseModel.frc) {
-                            self.frcLabel.textColor = UIColor.green;
-                        } else {
-                            self.frcLabel.textColor = UIColor.red;
+                        if let b = responseModel.boots {
+                            if (b) {
+                                self.bootsLabel.textColor = UIColor.green;
+                            }
+                        }
+
+                        if let b = responseModel.frc {
+                            if (b) {
+                                self.frcLabel.textColor = UIColor.green;
+                            }
                         }
                     }
                 } catch {
-                    print("Result JSON Serialization error")
+                    print("Result JSON Serialization error \(error)")
                 }
 
                 DispatchQueue.main.async { [unowned self] in
@@ -170,6 +184,7 @@ class DataViewController: UIViewController, CLLocationManagerDelegate {
             self.cameraView!.commonInit()
             self.uuid = UUID().uuidString;
             done = false;
+            locationManager.startUpdatingLocation();
         }
         else {
             cameraView!.captureImage(id: uuid, captureCallback: self);
@@ -202,16 +217,16 @@ class DvnLocation : Decodable {
 */
 
 class DvnResult : Decodable, Encodable {
-    var person: String = ""
-    var location = ""
-    var glasses = false
-    var hardhat = false
-    var frc = false
-    var boots = false
-    var glasses_probability = 0.0
-    var hardhat_probability = 0.0
-    var frc_probability = 0.0
-    var boots_probability = 0.0
+    var person: String? = ""
+    var location: String? = ""
+    var glasses: Bool? = false
+    var hardhat: Bool? = false
+    var frc: Bool? = false
+    var boots: Bool? = false
+    var glasses_probability: Double? = 0.0
+    var hardhat_probability: Double? = 0.0
+    var frc_probability: Double? = 0.0
+    var boots_probability: Double? = 0.0
 }
 
 extension String: Error {}
