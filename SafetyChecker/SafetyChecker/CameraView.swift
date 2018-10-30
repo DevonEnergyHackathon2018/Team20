@@ -6,21 +6,21 @@
 //  Copyright © 2018 Bradley Smith. All rights reserved.
 //
 
-import Foundation
-import AVFoundation
-import UIKit
+import Foundation;
+import AVFoundation;
+import UIKit;
 
 final class CameraView: UIView {
     private var cameraPosition: AVCaptureDevice.Position = AVCaptureDevice.Position.front
     private var previewLayerImpl: AVCaptureVideoPreviewLayer? = nil;
     private var sessionImpl: AVCaptureSession? = nil;
 
-    private lazy var videoDataOutput: AVCaptureVideoDataOutput = {
-        let v = AVCaptureVideoDataOutput()
-        v.alwaysDiscardsLateVideoFrames = true
-        v.setSampleBufferDelegate(self, queue: videoDataOutputQueue)
-        v.connection(with: .video)?.isEnabled = true
-        return v
+    public lazy var photoDataOutput: AVCapturePhotoOutput = {
+        let photoOutput = AVCapturePhotoOutput()
+        photoOutput.isHighResolutionCaptureEnabled = true;
+        photoOutput.isLivePhotoCaptureEnabled = false;
+
+        return photoOutput;
     }()
     
     private let videoDataOutputQueue: DispatchQueue = DispatchQueue(label: "JKVideoDataOutputQueue")
@@ -71,7 +71,7 @@ final class CameraView: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         
-        commonInit()
+        commonInit();
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -102,17 +102,19 @@ final class CameraView: UIView {
             resetSession();
 
             let deviceInput = try AVCaptureDeviceInput(device: captureDevice)
+
             if session.canAddInput(deviceInput) {
                 session.addInput(deviceInput)
             }
             
-            if session.canAddOutput(videoDataOutput) {
-                session.addOutput(videoDataOutput)
-            }
+            session.sessionPreset = .photo
+            session.addOutput(photoDataOutput)
 
             layer.masksToBounds = true
             layer.addSublayer(previewLayer)
             previewLayer.frame = bounds
+
+            session.commitConfiguration()
             session.startRunning()
         } catch let error {
             debugPrint("\(self.self): \(#function) line: \(#line).  \(error.localizedDescription)")
