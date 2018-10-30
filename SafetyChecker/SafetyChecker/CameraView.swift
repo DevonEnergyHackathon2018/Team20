@@ -93,6 +93,24 @@ final class CameraView: UIView {
         beginSession()
     }
     
+    let captureProcessor = PhotoCaptureProcessor();
+
+    public func captureImage() {
+        let photoSettings: AVCapturePhotoSettings
+        if photoDataOutput.availablePhotoCodecTypes.contains(.hevc) {
+            photoSettings = AVCapturePhotoSettings(format:
+                [AVVideoCodecKey: AVVideoCodecType.hevc]);
+        } else {
+            photoSettings = AVCapturePhotoSettings();
+        }
+        
+        photoSettings.flashMode = .auto;
+        photoSettings.isAutoStillImageStabilizationEnabled =
+            photoDataOutput.isStillImageStabilizationSupported;
+        
+        photoDataOutput.capturePhoto(with: photoSettings, delegate: captureProcessor)
+    }
+    
     private func beginSession() {
         do {
             guard let captureDevice = captureDevice else {
@@ -101,6 +119,7 @@ final class CameraView: UIView {
 
             resetSession();
 
+            session.beginConfiguration()
             let deviceInput = try AVCaptureDeviceInput(device: captureDevice)
 
             if session.canAddInput(deviceInput) {
@@ -128,3 +147,13 @@ final class CameraView: UIView {
 }
 
 extension CameraView: AVCaptureVideoDataOutputSampleBufferDelegate {}
+
+public class PhotoCaptureProcessor: NSObject, AVCapturePhotoCaptureDelegate {
+    public final func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
+        let imageData = photo.fileDataRepresentation()
+        if let data = imageData, let img = UIImage(data: data) {
+        }
+        
+        NSLog("photoOutput")
+    }
+}

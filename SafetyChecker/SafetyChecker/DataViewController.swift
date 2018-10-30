@@ -59,20 +59,8 @@ class DataViewController: UIViewController, CLLocationManagerDelegate {
         dataLabel!.backgroundColor = UIColor.black;
 
         NSLog("Snap");
-        let photoSettings: AVCapturePhotoSettings
-        if cameraView!.photoDataOutput.availablePhotoCodecTypes.contains(.hevc) {
-            photoSettings = AVCapturePhotoSettings(format:
-                [AVVideoCodecKey: AVVideoCodecType.hevc]);
-        } else {
-            photoSettings = AVCapturePhotoSettings();
-        }
-
-        photoSettings.flashMode = .auto;
-        photoSettings.isAutoStillImageStabilizationEnabled =
-            cameraView!.photoDataOutput.isStillImageStabilizationSupported;
         
-        let captureProcessor = PhotoCaptureProcessor()
-        cameraView!.photoDataOutput.capturePhoto(with: photoSettings, delegate: captureProcessor)
+        cameraView!.captureImage();
 
         AudioServicesPlaySystemSoundWithCompletion(SystemSoundID(1108), nil);
     }
@@ -80,15 +68,5 @@ class DataViewController: UIViewController, CLLocationManagerDelegate {
     @IBAction func shutterDown(_ sender: Any) {
         NSLog("Down");
         dataLabel!.backgroundColor = UIColor.white;
-    }
-}
-
-class PhotoCaptureProcessor: NSObject, AVCapturePhotoCaptureDelegate {
-    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
-        let imageData = photo.fileDataRepresentation()
-        if let data = imageData, let img = UIImage(data: data) {
-        }
-
-        NSLog("photoOutput")
     }
 }
