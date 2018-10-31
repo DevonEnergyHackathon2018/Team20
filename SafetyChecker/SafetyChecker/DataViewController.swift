@@ -87,7 +87,11 @@ class DataViewController: UIViewController, CLLocationManagerDelegate {
 
     func captureComplete(complete: Bool) {
         done = complete;
-        
+
+        DispatchQueue.main.async { [unowned self] in
+            self.dataLabel.backgroundColor = UIColor.black;
+        }
+
         if (complete) {
             let url = "https://dvnhack.azurewebsites.net/api/result/\(self.uuid)";
             
@@ -153,13 +157,11 @@ class DataViewController: UIViewController, CLLocationManagerDelegate {
                                 self.frcLabel.textColor = UIColor.green;
                             }
                         }
+
+                        self.cameraView!.isHidden = true;
                     }
                 } catch {
                     print("Result JSON Serialization error \(error)")
-                }
-
-                DispatchQueue.main.async { [unowned self] in
-                    self.cameraView!.isHidden = true;
                 }
             }).resume()
         } else {
@@ -187,6 +189,7 @@ class DataViewController: UIViewController, CLLocationManagerDelegate {
             locationManager.startUpdatingLocation();
         }
         else {
+            self.dataLabel.backgroundColor = UIColor.orange;
             cameraView!.captureImage(id: uuid, captureCallback: self);
         }
     }
