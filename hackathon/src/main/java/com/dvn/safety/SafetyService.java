@@ -9,7 +9,11 @@ public class SafetyService {
 
     private static Map<Boundary, String> locations = new ConcurrentHashMap<>();
 
-    private static Map<String, SafetyOutput> outputs = new ConcurrentHashMap<>();
+    private Map<String, SafetyOutput> outputs = new ConcurrentHashMap<>();
+
+    private SafetyOutput lastOutput = null;
+    private byte[] lastUpper = null;
+    private byte[] lastLower = null;
 
     static {
         locations.put(new Boundary(-97.518760, 35.466508, -97.519484, 35.466941), "Devon Auditorium");
@@ -19,7 +23,12 @@ public class SafetyService {
     }
 
     public SafetyOutput getOutput(String id) {
-        outputs.putIfAbsent(id, new SafetyOutput());
+        SafetyOutput output = outputs.putIfAbsent(id, new SafetyOutput());
+        if (output == null) {
+            lastOutput = outputs.get(id);
+            lastUpper = null;
+            lastLower = null;
+        }
         return outputs.get(id);
     }
 
@@ -35,6 +44,30 @@ public class SafetyService {
             }
         }
         return lat + ", " + lon;
+    }
+
+    public SafetyOutput getLastOutput() {
+        return lastOutput;
+    }
+
+    public byte[] getLastUpper() {
+        return lastUpper;
+    }
+
+    public byte[] getLastLower() {
+        return lastLower;
+    }
+
+    public void setLastOutput(SafetyOutput lastOutput) {
+        this.lastOutput = lastOutput;
+    }
+
+    public void setLastUpper(byte[] lastUpper) {
+        this.lastUpper = lastUpper;
+    }
+
+    public void setLastLower(byte[] lastLower) {
+        this.lastLower = lastLower;
     }
 
     private static class Boundary {
