@@ -30,14 +30,19 @@ function load() {
             var jsonHTML = '';
             Object.entries(json).forEach(function(element) { jsonHTML += '<b>' + element[0] + '</b>: ' + element[1] + '<br>'});
             jsonDiv.innerHTML = jsonHTML;
-            document.getElementById('last-upper').innerHTML = '<img src="' + 'api/lastupper?t=' + new Date().getTime() + '" height="609" width="281" onerror="this.style.display=\'none\'">';
-            document.getElementById('last-lower').innerHTML = '<img src="' + 'api/lastlower?t=' + new Date().getTime() + '" height="609" width="281" onerror="this.style.display=\'none\'">';
         }
         setTimeout(function() {load()}, 1000);
     };
     xhr.send();
 }
 load();
+
+function imageRefresh() {
+    document.getElementById('last-upper').innerHTML = '<img src="' + 'api/lastupper?t=' + new Date().getTime() + '" height="609" width="281" onerror="this.style.display=\'none\'">';
+    document.getElementById('last-lower').innerHTML = '<img src="' + 'api/lastlower?t=' + new Date().getTime() + '" height="609" width="281" onerror="this.style.display=\'none\'">';
+    setTimeout(function() {imageRefresh()}, 5000);
+}
+setTimeout(function() {imageRefresh()}, 5000);
 </script>
 
 <body>
