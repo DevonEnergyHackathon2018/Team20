@@ -12,7 +12,10 @@ public class SafetyService {
     private static Map<String, SafetyOutput> outputs = new ConcurrentHashMap<>();
 
     static {
-        locations.put(new Boundary(-180.0, -85, 180.0 ,85), "The Earth");
+        locations.put(new Boundary(-97.518760, 35.466508, -97.519484, 35.466941), "Devon Auditorium");
+        locations.put(new Boundary(-97.518052, 35.466958, -97.519404, 35.467470), "Garden Wing");
+        locations.put(new Boundary(-97.517087, 35.466566, -97.517947, 35.467165), "Devon Energy Center");
+        locations.put(new Boundary(-97.619099, 35.486510, -97.664730, 35.540512), "Bethany, OK");
     }
 
     public SafetyOutput getOutput(String id) {
@@ -23,10 +26,15 @@ public class SafetyService {
     public String getLocation(double lat, double lon) {
         for (Map.Entry<Boundary, String> entry: locations.entrySet()) {
             Boundary boundary = entry.getKey();
-            if (lon > boundary.upperX && lon < boundary.lowerX && lat > boundary.upperY && lat < boundary.lowerY)
+            if (Math.abs(lon) > Math.abs(boundary.upperX) &&
+                Math.abs(lon) < Math.abs(boundary.lowerX) &&
+                Math.abs(lat) > Math.abs(boundary.upperY) &&
+                Math.abs(lat) < Math.abs(boundary.lowerY) )
+            {
                 return entry.getValue();
+            }
         }
-        return "Unknown Location";
+        return lat + ", " + lon;
     }
 
     private static class Boundary {

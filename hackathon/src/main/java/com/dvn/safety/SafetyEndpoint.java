@@ -70,6 +70,7 @@ public class SafetyEndpoint {
 
         SafetyOutput output = safetyService.getOutput(id);
         output.location = safetyService.getLocation(geoInput.lat, geoInput.lon);
+        log.info("Location for {}, {} - {}", geoInput.lat, geoInput.lon, output.location);
 
         return Collections.singletonMap("success", Boolean.TRUE);
     }
