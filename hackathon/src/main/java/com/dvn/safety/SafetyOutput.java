@@ -8,7 +8,7 @@ public class SafetyOutput {
     private static float BOOTS_THRESHOLD = 0.5f;
     private static float PERSON_THRESHOLD = 0.5f;
 
-    public String person = "Unknown Person";
+    public String person = "Unknown";
     public String location;
     public boolean glasses;
     public boolean hardhat;

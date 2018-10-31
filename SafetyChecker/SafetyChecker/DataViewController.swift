@@ -13,10 +13,19 @@ import CoreLocation;
 class DataViewController: UIViewController, CLLocationManagerDelegate {
     let locationManager = CLLocationManager()
     
-    let uuid = UUID().uuidString;
+    var uuid = UUID().uuidString;
+    //var complete = false;
 
     let shutterImage: UIImage? = UIImage(named: "shutter");
+    var done = false;
 
+    @IBOutlet weak var personLabel: UILabel!
+    @IBOutlet weak var locationLabel: UILabel!
+    @IBOutlet weak var glassesLabel: UILabel!
+    @IBOutlet weak var hardhatLabel: UILabel!
+    @IBOutlet weak var bootsLabel: UILabel!
+    @IBOutlet weak var frcLabel: UILabel!
+    
     @IBOutlet weak var shutterButton: UIButton!
     @IBOutlet weak var cameraView: CameraView!
 
@@ -64,7 +73,7 @@ class DataViewController: UIViewController, CLLocationManagerDelegate {
                 print(self.uuid)
                 print(responseModel.success)
             } catch {
-                print("JSON Serialization error")
+                print("Geo JSON Serialization error")
             }
         }).resume()
 
@@ -74,44 +83,118 @@ class DataViewController: UIViewController, CLLocationManagerDelegate {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        self.dataLabel!.text = dataObject
+    }
+
+    func captureComplete(complete: Bool) {
+        done = complete;
+
+        DispatchQueue.main.async { [unowned self] in
+            self.dataLabel.backgroundColor = UIColor.black;
+        }
+
+        if (complete) {
+            let url = "https://dvnhack.azurewebsites.net/api/result/\(self.uuid)";
+            
+            NSLog(url);
+            
+            var request = URLRequest(url: URL(string: url)!)
+            request.httpMethod = "GET";
+            request.addValue("application/json", forHTTPHeaderField: "Accept")
+            request.httpBody = "".data(using: .utf8);
+
+            URLSession.shared.dataTask(with: request, completionHandler: { data, response, error -> Void in
+                do {
+                    print(self.uuid)
+                    print(response.debugDescription)
+
+                    guard let data = data else {
+                        print("No Data")
+                        abort();
+                    }
+
+                    let jsonDecoder = JSONDecoder()
+                    let responseModel = try jsonDecoder.decode(DvnResult.self, from: data)
+
+                    DispatchQueue.main.async { [unowned self] in
+                        self.dataLabel!.text = "Complete";
+
+                        self.personLabel!.text = "Null Peoples";
+                        self.locationLabel!.text = "Null Locationes";
+
+                        if let p = responseModel.person {
+                            self.personLabel!.text = p;
+                        }
+                        
+                        if let p = responseModel.location {
+                            self.locationLabel!.text = p;
+                        }
+
+                        self.frcLabel.textColor = UIColor.red;
+                        self.hardhatLabel.textColor = UIColor.red;
+                        self.glassesLabel.textColor = UIColor.red;
+                        self.bootsLabel.textColor = UIColor.red;
+
+                        if let b = responseModel.hardhat {
+                            if (b) {
+                                self.hardhatLabel.textColor = UIColor.green;
+                            }
+                        }
+
+                        if let b = responseModel.glasses {
+                            if (b) {
+                                self.glassesLabel.textColor = UIColor.green;
+                            }
+                        }
+
+                        if let b = responseModel.boots {
+                            if (b) {
+                                self.bootsLabel.textColor = UIColor.green;
+                            }
+                        }
+
+                        if let b = responseModel.frc {
+                            if (b) {
+                                self.frcLabel.textColor = UIColor.green;
+                            }
+                        }
+
+                        self.cameraView!.isHidden = true;
+                    }
+                } catch {
+                    print("Result JSON Serialization error \(error)")
+                }
+            }).resume()
+        } else {
+            DispatchQueue.main.async { [unowned self] in
+                self.dataLabel!.text = "Lower";
+                self.cameraView!.flipCamera();
+                self.cameraView!.resetSession();
+                
+                self.cameraView!.commonInit()
+            }
+        }
     }
 
     @IBAction func shutterActivated(_ sender: Any) {
-        cameraView!.captureImage(id: uuid);
-        
-        let url = "https://dvnhack.azurewebsites.net/api/result/\(self.uuid)";
-        NSLog(url);
-        
-        cameraView!.flipCamera();
-        cameraView!.resetSession();
-        
-        cameraView!.commonInit()
-        
-        dataLabel!.backgroundColor = UIColor.black;
-        
-        var request = URLRequest(url: URL(string: url)!)
-        request.httpMethod = "GET";
-        request.addValue("application/json", forHTTPHeaderField: "Accept");
-        
-        URLSession.shared.dataTask(with: request, completionHandler: { data, response, error -> Void in
-            do {
-                let jsonDecoder = JSONDecoder()
-                let responseModel = try jsonDecoder.decode(DvnResult.self, from: data!)
-                print(response.debugDescription)
-                print(self.uuid)
-                print(try JSONEncoder().encode(responseModel))
-            } catch {
-                print("JSON Serialization error")
-            }
-        }).resume()
-
-        AudioServicesPlaySystemSoundWithCompletion(SystemSoundID(1108), nil);
+        if (done) {
+            // restart the process.
+            self.dataLabel.text = "Upper";
+            self.cameraView.isHidden = false;
+            self.cameraView!.initCamera();
+            self.cameraView.resetSession();
+            
+            self.cameraView!.commonInit()
+            self.uuid = UUID().uuidString;
+            done = false;
+            locationManager.startUpdatingLocation();
+        }
+        else {
+            self.dataLabel.backgroundColor = UIColor.orange;
+            cameraView!.captureImage(id: uuid, captureCallback: self);
+        }
     }
     
     @IBAction func shutterDown(_ sender: Any) {
-        NSLog("Down");
-        dataLabel!.backgroundColor = UIColor.white;
     }
 }
 
@@ -121,15 +204,32 @@ class DvnLocation : Decodable {
     public init() {}
 }
 
-class DvnResult : Decodable, Encodable {
-    var person: String = ""
-    var location = ""
-    var glasses = false
-    var hardhat = false
-    var frc = false
-    var boots = false
-    var glasses_probability = 0
-    var hardhat_probability = 0
-    var frc_probability = 0
-    var boots_probability = 0
+/*
+ {
+    "person":"Unknown Person",
+    "location":"Unknown Location",
+    "glasses":false,
+    "hardhat":false,
+    "frc":false,
+    "boots":false,
+    "glasses_probability":0.00387102715,
+    "hardhat_probability":2.88309875E-5,
+    "frc_probability":2.29863144E-6,
+    "boots_probability":4.824633E-4
 }
+*/
+
+class DvnResult : Decodable, Encodable {
+    var person: String? = ""
+    var location: String? = ""
+    var glasses: Bool? = false
+    var hardhat: Bool? = false
+    var frc: Bool? = false
+    var boots: Bool? = false
+    var glasses_probability: Double? = 0.0
+    var hardhat_probability: Double? = 0.0
+    var frc_probability: Double? = 0.0
+    var boots_probability: Double? = 0.0
+}
+
+extension String: Error {}

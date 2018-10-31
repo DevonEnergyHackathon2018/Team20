@@ -85,6 +85,10 @@ final class CameraView: UIView {
         commonInit()
     }
     
+    func initCamera() {
+        cameraPosition = .front;
+    }
+
     func flipCamera() {
         if (cameraPosition == .front) {
             cameraPosition = .back;
@@ -100,9 +104,7 @@ final class CameraView: UIView {
     
     let captureProcessor = PhotoCaptureProcessor();
 
-    public func captureImage(id: String) {
-        captureProcessor.id = id;
-        
+    public func captureImage(id: String, captureCallback: DataViewController) {
         if (cameraPosition == .front) {
             captureProcessor.version = "upper";
         }
@@ -110,19 +112,27 @@ final class CameraView: UIView {
             captureProcessor.version = "lower";
         }
 
-        let photoSettings: AVCapturePhotoSettings
+        captureProcessor.id = id;
+        captureProcessor.captureCallback = {
+            if (self.captureProcessor.version == "lower") {
+                captureCallback.captureComplete(complete: true);
+            } else {
+                captureCallback.captureComplete(complete: false);
+            }
+        };
+        
         if photoDataOutput.availablePhotoCodecTypes.contains(.jpeg) {
-            photoSettings = AVCapturePhotoSettings(format:
+            captureProcessor.photoSettings = AVCapturePhotoSettings(format:
                 [AVVideoCodecKey: AVVideoCodecType.jpeg]);
         } else {
-            photoSettings = AVCapturePhotoSettings();
+            captureProcessor.photoSettings = AVCapturePhotoSettings();
         }
         
-        photoSettings.flashMode = .auto;
-        photoSettings.isAutoStillImageStabilizationEnabled =
+        captureProcessor.photoSettings!.flashMode = .auto;
+        captureProcessor.photoSettings!.isAutoStillImageStabilizationEnabled =
             photoDataOutput.isStillImageStabilizationSupported;
-        
-        photoDataOutput.capturePhoto(with: photoSettings, delegate: captureProcessor)
+
+        photoDataOutput.capturePhoto(with: captureProcessor.photoSettings!, delegate: captureProcessor)
     }
     
     private func beginSession() {
@@ -166,6 +176,10 @@ public class PhotoCaptureProcessor: NSObject, AVCapturePhotoCaptureDelegate {
     var version: String = "";
     var id: String = "";
 
+    var photoSettings: AVCapturePhotoSettings? = nil;
+
+    var captureCallback: () -> Void = {};
+
     public final func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
         let imageData = photo.fileDataRepresentation()
 
@@ -186,12 +200,12 @@ public class PhotoCaptureProcessor: NSObject, AVCapturePhotoCaptureDelegate {
                     let responseModel = try jsonDecoder.decode(DvnLocation.self, from: data!)
                     print(response.debugDescription)
                     print(responseModel.success)
+
+                    self.captureCallback();
                 } catch {
-                    print("JSON Serialization error")
+                    print("Image JSON Serialization error")
                 }
-            }).resume()
+            }).resume();
         }
-        
-        NSLog("photoOutput")
     }
 }

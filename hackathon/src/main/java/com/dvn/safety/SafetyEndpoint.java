@@ -45,6 +45,7 @@ public class SafetyEndpoint {
         imageCallAsync(byteArray, FRC_API, output, asyncCalls, false);
 
         asyncCalls.await();
+        safetyService.setLastUpper(byteArray);
         return Collections.singletonMap("success", Boolean.TRUE);
     }
 
@@ -60,6 +61,7 @@ public class SafetyEndpoint {
         imageCallAsync(byteArray, BOOTS_API, output, asyncCalls, false);
 
         asyncCalls.await();
+        safetyService.setLastLower(byteArray);
         return Collections.singletonMap("success", Boolean.TRUE);
     }
 
@@ -70,6 +72,7 @@ public class SafetyEndpoint {
 
         SafetyOutput output = safetyService.getOutput(id);
         output.location = safetyService.getLocation(geoInput.lat, geoInput.lon);
+        log.info("Location for {}, {} - {}", geoInput.lat, geoInput.lon, output.location);
 
         return Collections.singletonMap("success", Boolean.TRUE);
     }
@@ -79,6 +82,36 @@ public class SafetyEndpoint {
     public SafetyOutput getResult(@PathParam("id") String id) {
         log.info("Returning result for id: {} - {}", id, safetyService.getOutput(id));
         return safetyService.getOutput(id);
+    }
+
+    @GET
+    @Path("last")
+    public SafetyOutput getLastOutput() {
+        return safetyService.getLastOutput();
+    }
+
+    @GET
+    @Path("lastupper")
+    @Produces("image/jpeg")
+    public javax.ws.rs.core.Response getLastUpperImage() {
+        javax.ws.rs.core.CacheControl cc = new javax.ws.rs.core.CacheControl();
+        cc.setNoCache(true);
+        cc.setNoStore(true);
+        cc.setMustRevalidate(true);
+        cc.setMaxAge(0);
+        return javax.ws.rs.core.Response.ok(safetyService.getLastUpper()).cacheControl(cc).build();
+    }
+
+    @GET
+    @Path("lastlower")
+    @Produces("image/jpeg")
+    public javax.ws.rs.core.Response getLastLowerImage() {
+        javax.ws.rs.core.CacheControl cc = new javax.ws.rs.core.CacheControl();
+        cc.setNoCache(true);
+        cc.setNoStore(true);
+        cc.setMustRevalidate(true);
+        cc.setMaxAge(0);
+        return javax.ws.rs.core.Response.ok(safetyService.getLastLower()).cacheControl(cc).build();
     }
 
     @POST
