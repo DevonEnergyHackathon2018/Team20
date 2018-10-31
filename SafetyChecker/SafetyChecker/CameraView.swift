@@ -120,20 +120,19 @@ final class CameraView: UIView {
                 captureCallback.captureComplete(complete: false);
             }
         };
-
-        let photoSettings: AVCapturePhotoSettings
+        
         if photoDataOutput.availablePhotoCodecTypes.contains(.jpeg) {
-            photoSettings = AVCapturePhotoSettings(format:
+            captureProcessor.photoSettings = AVCapturePhotoSettings(format:
                 [AVVideoCodecKey: AVVideoCodecType.jpeg]);
         } else {
-            photoSettings = AVCapturePhotoSettings();
+            captureProcessor.photoSettings = AVCapturePhotoSettings();
         }
         
-        photoSettings.flashMode = .auto;
-        photoSettings.isAutoStillImageStabilizationEnabled =
+        captureProcessor.photoSettings!.flashMode = .auto;
+        captureProcessor.photoSettings!.isAutoStillImageStabilizationEnabled =
             photoDataOutput.isStillImageStabilizationSupported;
-        
-        photoDataOutput.capturePhoto(with: photoSettings, delegate: captureProcessor)
+
+        photoDataOutput.capturePhoto(with: captureProcessor.photoSettings!, delegate: captureProcessor)
     }
     
     private func beginSession() {
@@ -176,6 +175,8 @@ extension CameraView: AVCaptureVideoDataOutputSampleBufferDelegate {}
 public class PhotoCaptureProcessor: NSObject, AVCapturePhotoCaptureDelegate {
     var version: String = "";
     var id: String = "";
+
+    var photoSettings: AVCapturePhotoSettings? = nil;
 
     var captureCallback: () -> Void = {};
 
